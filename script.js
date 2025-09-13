@@ -139,8 +139,11 @@ function onPoseResults(results) {
     const exerciseType = exerciseTypeSelect.value;
     
     switch (exerciseType) {
-        case 'squat':
-            analyzeSquat(results.poseLandmarks);
+        case 'squat_front':
+            analyzeSquatFront(results.poseLandmarks);
+            break;
+        case 'squat_side':
+            analyzeSquatSide(results.poseLandmarks);
             break;
         case 'deadlift':
             analyzeDeadlift(results.poseLandmarks);
@@ -190,7 +193,7 @@ function analyzeSquat(landmarks) {
             const kneeDistance = calculateDistance(leftKnee, rightKnee);
             const ankleDistance = calculateDistance(leftAnkle, rightAnkle);
             
-            if (kneeDistance < ankleDistance * 0.6) {
+            if (kneeDistance < ankleDistance * 0.8) {
                 showFeedback('注意膝盖不要内扣', 'warning');
             }
             
@@ -199,12 +202,102 @@ function analyzeSquat(landmarks) {
             const rightShoulder = landmarks[12];
             const spineAngle = calculateAngle(leftShoulder, leftHip, leftKnee);
             
-            if (spineAngle < 140) {
+            if (spineAngle < 130) {
                 showFeedback('保持背部挺直', 'warning');
             }
         }
     } catch (error) {
         console.error('深蹲动作分析错误:', error);
+    }
+}
+
+// 分析深蹲动作 - 正面视角（只判定膝盖内扣）
+function analyzeSquatFront(landmarks) {
+    try {
+        // 获取关键关节点
+        const leftHip = landmarks[23];
+        const rightHip = landmarks[24];
+        const leftKnee = landmarks[25];
+        const rightKnee = landmarks[26];
+        const leftAnkle = landmarks[27];
+        const rightAnkle = landmarks[28];
+        
+        // 计算膝盖角度（取左右膝盖的平均值）用于动作阶段分析
+        const leftKneeAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
+        const rightKneeAngle = calculateAngle(rightHip, rightKnee, rightAnkle);
+        const kneeAngle = (leftKneeAngle + rightKneeAngle) / 2;
+        
+        // 分析动作阶段（保持与原深蹲相同的阶段判断逻辑）
+        if (kneeAngle > 160 && exerciseState === 'up') {
+            exerciseState = 'ready';
+            showFeedback('准备就绪，请开始深蹲（正面视角 - 专注膝盖内扣）', 'info');
+        } else if (kneeAngle < 90 && exerciseState === 'ready') {
+            exerciseState = 'down';
+            showFeedback('深蹲到位，准备起身', 'info');
+        } else if (kneeAngle > 160 && exerciseState === 'down') {
+            exerciseState = 'up';
+            repCount++;
+            repCountElement.textContent = `次数: ${repCount}`;
+            showFeedback('完美！完成一次深蹲', 'success');
+        }
+        
+        // 纠正动作 - 只检查膝盖是否内扣
+        if (exerciseState !== 'ready') {
+            // 检查膝盖是否内扣
+            const kneeDistance = calculateDistance(leftKnee, rightKnee);
+            const ankleDistance = calculateDistance(leftAnkle, rightAnkle);
+            
+            if (kneeDistance < ankleDistance * 0.8) {
+                showFeedback('注意膝盖不要内扣', 'warning');
+            }
+        }
+    } catch (error) {
+        console.error('深蹲正面视角分析错误:', error);
+    }
+}
+
+// 分析深蹲动作 - 侧面视角（只判定背部挺直）
+function analyzeSquatSide(landmarks) {
+    try {
+        // 获取关键关节点
+        const leftHip = landmarks[23];
+        const rightHip = landmarks[24];
+        const leftKnee = landmarks[25];
+        const rightKnee = landmarks[26];
+        const leftAnkle = landmarks[27];
+        const rightAnkle = landmarks[28];
+        
+        // 计算膝盖角度（取左右膝盖的平均值）用于动作阶段分析
+        const leftKneeAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
+        const rightKneeAngle = calculateAngle(rightHip, rightKnee, rightAnkle);
+        const kneeAngle = (leftKneeAngle + rightKneeAngle) / 2;
+        
+        // 分析动作阶段（保持与原深蹲相同的阶段判断逻辑）
+        if (kneeAngle > 160 && exerciseState === 'up') {
+            exerciseState = 'ready';
+            showFeedback('准备就绪，请开始深蹲（侧面视角 - 专注背部挺直）', 'info');
+        } else if (kneeAngle < 90 && exerciseState === 'ready') {
+            exerciseState = 'down';
+            showFeedback('深蹲到位，准备起身', 'info');
+        } else if (kneeAngle > 160 && exerciseState === 'down') {
+            exerciseState = 'up';
+            repCount++;
+            repCountElement.textContent = `次数: ${repCount}`;
+            showFeedback('完美！完成一次深蹲', 'success');
+        }
+        
+        // 纠正动作 - 只检查背部是否保持挺直
+        if (exerciseState !== 'ready') {
+            // 检查背部是否保持挺直
+            const leftShoulder = landmarks[11];
+            const spineAngle = calculateAngle(leftShoulder, leftHip, leftKnee);
+            
+            if (spineAngle < 120) {
+                showFeedback('保持背部挺直', 'warning');
+            }
+        }
+    } catch (error) {
+        console.error('深蹲侧面视角分析错误:', error);
     }
 }
 
@@ -409,6 +502,9 @@ function speak(text) {
     window.speechSynthesis.speak(utterance);
 }
 
+// 全局变量：是否可以开始纠正动作的语音
+let canCorrectMotion = false;
+
 // 显示反馈信息
 function showFeedback(text, type = 'info') {
     feedbackTextElement.textContent = text;
@@ -428,9 +524,9 @@ function showFeedback(text, type = 'info') {
             feedbackTextElement.style.color = '#6c757d';
     }
     
-    // 语音反馈（如果未静音且不在间隔期内）
+    // 语音反馈（如果未静音且不在间隔期内，并且可以开始纠正动作的语音）
     const now = Date.now();
-    if (!isMuted && now - lastFeedbackTime > FEEDBACK_INTERVAL) {
+    if (!isMuted && now - lastFeedbackTime > FEEDBACK_INTERVAL && (canCorrectMotion || type === 'info')) {
         speak(text);
         lastFeedbackTime = now;
     }
@@ -529,9 +625,18 @@ async function startTraining() {
             }
         }
         
-        // 开始处理
-        showFeedback('开始训练，请站在摄像头前', 'info');
-        processVideo();
+        // 播放欢迎语音
+        canCorrectMotion = false;
+        const welcomeText = '欢迎使用StartFitter AI健身助手，我已就绪，请开始训练';
+        feedbackTextElement.textContent = welcomeText;
+        feedbackTextElement.style.color = '#6c757d';
+        speak(welcomeText);
+        
+        // 延迟开始处理视频流，确保欢迎语音播放完毕
+        setTimeout(() => {
+            canCorrectMotion = true;
+            processVideo();
+        }, 3000);
     } catch (error) {
         console.error('开始训练失败:', error);
         showFeedback('开始训练失败，请重试', 'error');
@@ -589,7 +694,7 @@ exerciseTypeSelect.addEventListener('change', onExerciseTypeChange);
 
 // 初始化应用
 function initApp() {
-    showFeedback('欢迎使用AI健身助手，请选择动作并点击开始训练', 'info');
+    showFeedback('欢迎使用StartFitter，请选择动作并开始训练', 'info');
 }
 
 // 页面加载完成后初始化应用
