@@ -544,9 +544,9 @@ function speak(text) {
     // 创建语音实例
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'zh-CN';
-    utterance.volume = 1;
-    utterance.rate = 1;
-    utterance.pitch = 1;
+    utterance.volume = 1.0; // 音量已设置为最大值
+    utterance.rate = 0.9; // 略微降低语速，使声音更清晰
+    utterance.pitch = 0.8; // 略微降低音高，使声音更浑厚，增强感知音量
     
     // 播放语音
     window.speechSynthesis.speak(utterance);
@@ -556,7 +556,7 @@ function speak(text) {
 let canCorrectMotion = false;
 
 // 显示反馈信息
-function showFeedback(text, type = 'info') {
+function showFeedback(text, type = 'info', enableSpeech = true) {
     feedbackTextElement.textContent = text;
     
     // 根据类型设置不同的颜色
@@ -574,9 +574,9 @@ function showFeedback(text, type = 'info') {
             feedbackTextElement.style.color = '#6c757d';
     }
     
-    // 语音反馈（如果未静音且不在间隔期内，并且可以开始纠正动作的语音）
+    // 语音反馈（如果未静音且不在间隔期内，并且可以开始纠正动作的语音，且启用了语音）
     const now = Date.now();
-    if (!isMuted && now - lastFeedbackTime > FEEDBACK_INTERVAL && (canCorrectMotion || type === 'info')) {
+    if (enableSpeech && !isMuted && now - lastFeedbackTime > FEEDBACK_INTERVAL && (canCorrectMotion || type === 'info')) {
         speak(text);
         lastFeedbackTime = now;
     }
@@ -1056,7 +1056,7 @@ function startMusic() {
         
         // 先显示正在准备播放的提示
         const preparingMsg = '🔊 正在准备播放音乐: ' + currentTrack;
-        showFeedback(preparingMsg, 'info');
+        showFeedback(preparingMsg, 'info', false); // 不启用语音提示，避免播报文件名
         
         // 如果有当前曲目索引元素，也显示这个信息
         if (currentTrackIndexElement) {
@@ -1112,7 +1112,7 @@ function startMusic() {
                     
                     // 显示成功信息
                     const successMsg = '🎵 背景音乐已开始播放: ' + currentTrack;
-                    showFeedback(successMsg, 'info');
+                    showFeedback(successMsg, 'info', false); // 不启用语音提示
                     console.log(successMsg);
                     
                     if (currentTrackIndexElement) {
@@ -1144,7 +1144,7 @@ function startMusic() {
                         break;
                 }
                 
-                showFeedback(errorMsg, 'error');
+                showFeedback(errorMsg, 'error', false); // 不启用语音提示
                 if (currentTrackIndexElement) {
                     currentTrackIndexElement.value = errorMsg;
                 }
@@ -1186,7 +1186,7 @@ function handlePlaybackError(error, trackName) {
     }
     
     // 显示错误信息
-    showFeedback(errorMsg, 'error');
+    showFeedback(errorMsg, 'error', false); // 不启用语音提示
     if (currentTrackIndexElement) {
         currentTrackIndexElement.value = errorMsg;
     }
@@ -1214,7 +1214,7 @@ function pauseMusic() {
         isMusicPlaying = false;
         playMusicBtn.disabled = false;
         pauseMusicBtn.disabled = true;
-        showFeedback('背景音乐已暂停', 'info');
+        showFeedback('背景音乐已暂停', 'info', false); // 不启用语音提示
     }
 }
 
@@ -1237,5 +1237,5 @@ function playNextTrack() {
 function adjustVolume() {
     const volume = parseFloat(musicVolumeControl.value);
     audioElement.volume = volume;
-    showFeedback(`背景音乐音量已调整到 ${Math.round(volume * 100)}%`, 'info');
+    showFeedback(`背景音乐音量已调整到 ${Math.round(volume * 100)}%`, 'info', false); // 不启用语音提示
 }
