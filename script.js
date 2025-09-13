@@ -791,12 +791,26 @@ function checkThirtySecondMark() {
         }
         
         // 优先播放30秒提醒语音，确保能播报完
-        // 停止任何正在进行的语音
+        // 1. 停止任何正在进行的语音
         window.speechSynthesis.cancel();
+        
+        // 2. 临时禁用动作纠正的语音反馈
+        const previousCanCorrectMotion = canCorrectMotion;
+        canCorrectMotion = false;
+        
+        // 3. 播放30秒提醒语音
         speak(message);
         
-        // 也显示文字反馈
-        showFeedback(message, 'success');
+        // 4. 显示文字反馈（不触发语音）
+        feedbackTextElement.textContent = message;
+        feedbackTextElement.style.color = '#28a745';
+        
+        // 5. 语音播放完成后，恢复动作纠正的语音反馈
+        // 估算语音播放时间（约200ms/字）
+        const estimatedDuration = message.length * 200;
+        setTimeout(() => {
+            canCorrectMotion = previousCanCorrectMotion;
+        }, estimatedDuration);
         
         // 3秒后自动关闭弹窗
         setTimeout(() => {
