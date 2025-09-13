@@ -449,12 +449,12 @@ function analyzePushup(landmarks) {
             // 检查臀部是否抬起或下沉
             const bodyStraightness = Math.abs((midHip.y - midShoulder.y) - (midAnkle.y - midHip.y));
             
-            if (bodyStraightness > 0.1) {
+            if (bodyStraightness > 0.05) {
                 showFeedback('保持身体呈直线，不要塌腰或撅臀', 'warning');
             }
             
             // 检查手肘是否向外展开过大
-            if (elbowAngle < 70) {
+            if (elbowAngle < 100) {
                 showFeedback('手肘不要向外展开过大', 'warning');
             }
         }
