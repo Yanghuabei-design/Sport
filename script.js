@@ -190,7 +190,7 @@ function analyzeSquat(landmarks) {
             const kneeDistance = calculateDistance(leftKnee, rightKnee);
             const ankleDistance = calculateDistance(leftAnkle, rightAnkle);
             
-            if (kneeDistance < ankleDistance * 0.8) {
+            if (kneeDistance < ankleDistance * 0.6) {
                 showFeedback('注意膝盖不要内扣', 'warning');
             }
             
