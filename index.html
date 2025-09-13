@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI健身助手 - 实时动作识别与纠正</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- 引入MediaPipe Pose和TensorFlow.js库 -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@3.19.0/dist/tf-core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter@3.19.0/dist/tf-converter.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@3.19.0/dist/tf-backend-webgl.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI健身助手</h1>
+            <p>实时动作识别与纠正系统</p>
+        </header>
+        
+        <main>
+            <section class="video-section">
+                <div class="video-container">
+                    <video id="webcam" autoplay muted playsinline></video>
+                    <canvas id="overlay"></canvas>
+                </div>
+            </section>
+            
+            <section class="controls-section">
+                <div class="exercise-selector">
+                    <label for="exercise-type">选择健身动作：</label>
+                    <select id="exercise-type">
+                        <option value="squat">深蹲</option>
+                        <option value="deadlift">硬拉</option>
+                        <option value="pushup">俯卧撑</option>
+                        <option value="plank">平板支撑</option>
+                    </select>
+                </div>
+                
+                <div class="status-display">
+                    <div class="counter">
+                        <span id="rep-count">次数: 0</span>
+                    </div>
+                    <div class="feedback">
+                        <span id="feedback-text">准备开始...</span>
+                    </div>
+                </div>
+                
+                <div class="buttons">
+                    <button id="start-btn" class="btn">开始训练</button>
+                    <button id="stop-btn" class="btn" disabled>停止训练</button>
+                    <button id="mute-btn" class="btn">静音</button>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 AI健身助手团队 - 科学健身，预防损伤</p>
+        </footer>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
