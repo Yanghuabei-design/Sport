@@ -292,7 +292,7 @@ function analyzeSquatSide(landmarks) {
             const leftShoulder = landmarks[11];
             const spineAngle = calculateAngle(leftShoulder, leftHip, leftKnee);
             
-            if (spineAngle < 120) {
+            if (spineAngle < 110) {
                 showFeedback('保持背部挺直', 'warning');
             }
         }
