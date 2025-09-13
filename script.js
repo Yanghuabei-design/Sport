@@ -627,7 +627,7 @@ async function startTraining() {
         
         // 播放欢迎语音
         canCorrectMotion = false;
-        const welcomeText = '欢迎使用StartFitter AI健身助手，我已就绪，请开始训练';
+        const welcomeText = 'StartFitter已就绪，随时可以开始训练';
         feedbackTextElement.textContent = welcomeText;
         feedbackTextElement.style.color = '#6c757d';
         speak(welcomeText);
@@ -694,7 +694,7 @@ exerciseTypeSelect.addEventListener('change', onExerciseTypeChange);
 
 // 初始化应用
 function initApp() {
-    showFeedback('欢迎使用StartFitter，请选择动作并开始训练', 'info');
+    showFeedback('Hi, I\'m StartFitter. 选择你的动作并开始训练吧。', 'info');
 }
 
 // 页面加载完成后初始化应用
