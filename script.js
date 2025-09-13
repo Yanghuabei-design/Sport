@@ -190,12 +190,12 @@ function analyzeSquat(landmarks) {
         // 纠正动作
         if (exerciseState !== 'ready') {
             // 检查膝盖是否内扣
-            const kneeDistance = calculateDistance(leftKnee, rightKnee);
-            const ankleDistance = calculateDistance(leftAnkle, rightAnkle);
-            
-            if (kneeDistance < ankleDistance * 0.8) {
-                showFeedback('注意膝盖不要内扣', 'warning');
-            }
+        const kneeDistance = calculateDistance(leftKnee, rightKnee);
+        const ankleDistance = calculateDistance(leftAnkle, rightAnkle);
+        
+        if (kneeDistance < ankleDistance * 1.3) {
+            showFeedback('注意膝盖不要内扣', 'warning');
+        }
             
             // 检查背部是否保持挺直（调整判定阈值，更加严格）
             const leftShoulder = landmarks[11];
@@ -247,7 +247,7 @@ function analyzeSquatFront(landmarks) {
             const kneeDistance = calculateDistance(leftKnee, rightKnee);
             const ankleDistance = calculateDistance(leftAnkle, rightAnkle);
             
-            if (kneeDistance < ankleDistance * 0.8) {
+            if (kneeDistance < ankleDistance * 1.3) {
                 showFeedback('注意膝盖不要内扣', 'warning');
             }
         }
