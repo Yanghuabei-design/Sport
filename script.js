@@ -921,4 +921,321 @@ window.addEventListener('DOMContentLoaded', () => {
     closeTimerModalBtn.addEventListener('click', () => {
         plankTimerModal.style.display = 'none';
     });
+
+    // 初始化音乐播放功能
+    initMusicPlayer();
 });
+
+// ===== 音乐播放功能 ===== //
+
+// 音乐文件列表 - 确保这些文件确实存在于项目根目录
+const musicFiles = [
+    "Alistair Griffin - Chemistry.mp3",
+    "Atlxs - PASSO BEM SOLTO (Slowed).mp3",
+    "Crayon Pop - Bar Bar Bar.mp3",
+    "Ed Sheeran - Shape of You.mp3",
+    "Eternxlkz - Montagem Nada Tropica.mp3",
+    "Jonasu - Black Magic.mp3",
+    "King CAAN,Elysa - Go Again (feat. ELYSA).mp3",
+    "Linkin Park - In the End.mp3",
+    "Lulleaux,Kid Princess - Empty Love.mp3",
+    "andrew spacey,Tommy Ice - Rear View.mp3"
+];
+
+// 音乐播放状态
+let isMusicPlaying = false;
+let shuffledMusic = [...musicFiles];
+let currentTrackIndex = 0;
+// 确保使用正确的ID引用DOM元素
+let audioElement = document.getElementById('background-music');
+let currentTrackIndexElement = document.getElementById('current-track-index');
+let playMusicBtn = document.getElementById('play-music-btn');
+let pauseMusicBtn = document.getElementById('pause-music-btn');
+let musicVolumeControl = document.getElementById('music-volume');
+
+// 初始化音乐播放器
+function initMusicPlayer() {
+    // 显示音乐文件列表用于调试
+    console.log('✅ 可用的音乐文件列表:', musicFiles);
+    
+    // 检查DOM元素是否存在，使用更友好的提示和容错
+    console.log('🎵 音频元素状态检查:');
+    console.log('- 音频元素:', audioElement);
+    console.log('- 播放按钮:', playMusicBtn);
+    console.log('- 暂停按钮:', pauseMusicBtn);
+    console.log('- 音量控制:', musicVolumeControl);
+    console.log('- 当前曲目索引元素:', currentTrackIndexElement);
+    
+    // 如果DOM元素不存在，创建它们
+    if (!audioElement) {
+        console.log('🎵 创建音频元素');
+        audioElement = document.createElement('audio');
+        audioElement.id = 'background-music';
+        audioElement.preload = 'metadata'; // 优化加载
+        document.body.appendChild(audioElement);
+    }
+    
+    // 随机打乱音乐顺序
+    shuffleMusic();
+    
+    // 设置默认音量
+    if (audioElement && musicVolumeControl) {
+        audioElement.volume = 0.5;
+        musicVolumeControl.value = 0.5;
+    }
+    
+    // 设置音乐结束事件
+    audioElement.addEventListener('ended', playNextTrack);
+    
+    // 设置按钮事件 - 增强用户交互体验
+    if (playMusicBtn) {
+        // 重置按钮状态和样式
+        playMusicBtn.disabled = false;
+        playMusicBtn.style.backgroundColor = '#28a745';
+        playMusicBtn.style.color = 'white';
+        playMusicBtn.style.cursor = 'pointer';
+        
+        // 添加播放事件 - 确保在用户交互上下文中执行
+        playMusicBtn.addEventListener('click', function() {
+            console.log('👆 用户点击了播放按钮');
+            startMusic();
+        });
+    }
+    
+    if (pauseMusicBtn) {
+        // 禁用暂停按钮，因为默认是停止状态
+        pauseMusicBtn.disabled = true;
+        pauseMusicBtn.style.backgroundColor = '#6c757d';
+        pauseMusicBtn.style.cursor = 'not-allowed';
+        
+        pauseMusicBtn.addEventListener('click', pauseMusic);
+    }
+    
+    if (musicVolumeControl) {
+        musicVolumeControl.addEventListener('input', adjustVolume);
+    }
+    
+    // 显示音乐功能就绪信息 - 强调用户交互
+    const readyMessage = '🎵 背景音乐功能已就绪，请点击"播放音乐"按钮开始播放 🎵';
+    console.log(readyMessage);
+    showFeedback(readyMessage, 'info');
+    
+    // 如果有当前曲目索引元素，也在这里显示信息
+    if (currentTrackIndexElement) {
+        currentTrackIndexElement.value = readyMessage;
+    }
+}
+
+// 随机打乱音乐顺序
+function shuffleMusic() {
+    // Fisher-Yates 洗牌算法
+    for (let i = shuffledMusic.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledMusic[i], shuffledMusic[j]] = [shuffledMusic[j], shuffledMusic[i]];
+    }
+    
+    // 重置当前索引
+    currentTrackIndex = 0;
+    updateCurrentTrackIndex();
+}
+
+// 更新当前曲目索引
+function updateCurrentTrackIndex() {
+    currentTrackIndexElement.value = currentTrackIndex;
+}
+
+// 开始播放音乐 - 优化版，专为解决浏览器自动播放限制设计
+function startMusic() {
+    if (!isMusicPlaying) {
+        // 确保在用户交互上下文中执行
+        console.log('🎯 在用户交互上下文中启动音乐播放...');
+        
+        // 加载当前曲目
+        const currentTrack = shuffledMusic[currentTrackIndex];
+        console.log('🎶 尝试播放音乐:', currentTrack);
+        
+        // 先显示正在准备播放的提示
+        const preparingMsg = '🔊 正在准备播放音乐: ' + currentTrack;
+        showFeedback(preparingMsg, 'info');
+        
+        // 如果有当前曲目索引元素，也显示这个信息
+        if (currentTrackIndexElement) {
+            currentTrackIndexElement.value = preparingMsg;
+        }
+        
+        // 检查音频元素是否存在
+        if (!audioElement) {
+            console.error('❌ 音频元素不存在');
+            showFeedback('❌ 音频组件加载失败', 'error');
+            return;
+        }
+        
+        try {
+            // 重置音频元素，确保干净的状态
+            console.log('🔄 重置音频元素状态...');
+            
+            // 清除所有事件监听器
+            const newAudioElement = document.createElement('audio');
+            newAudioElement.id = 'background-music';
+            newAudioElement.preload = 'metadata';
+            newAudioElement.volume = musicVolumeControl ? parseFloat(musicVolumeControl.value) : 0.5;
+            
+            // 替换旧的音频元素
+            const parent = audioElement.parentNode;
+            if (parent) {
+                parent.replaceChild(newAudioElement, audioElement);
+                audioElement = newAudioElement;
+            }
+            
+            // 设置新的事件监听器
+            audioElement.addEventListener('ended', playNextTrack);
+            
+            // 音频加载完成事件 - 在加载完成后再尝试播放，增加成功概率
+            audioElement.addEventListener('loadeddata', function() {
+                console.log('✅ 音频数据加载完成');
+                
+                // 在loadeddata事件中尝试播放，这更符合浏览器的自动播放政策
+                audioElement.play().then(() => {
+                    isMusicPlaying = true;
+                    
+                    // 更新按钮状态和样式
+                    if (playMusicBtn) {
+                        playMusicBtn.disabled = true;
+                        playMusicBtn.style.backgroundColor = '#6c757d';
+                        playMusicBtn.style.cursor = 'not-allowed';
+                    }
+                    if (pauseMusicBtn) {
+                        pauseMusicBtn.disabled = false;
+                        pauseMusicBtn.style.backgroundColor = '#dc3545';
+                        pauseMusicBtn.style.cursor = 'pointer';
+                    }
+                    
+                    // 显示成功信息
+                    const successMsg = '🎵 背景音乐已开始播放: ' + currentTrack;
+                    showFeedback(successMsg, 'info');
+                    console.log(successMsg);
+                    
+                    if (currentTrackIndexElement) {
+                        currentTrackIndexElement.value = successMsg;
+                    }
+                }).catch(error => {
+                    handlePlaybackError(error, currentTrack);
+                });
+            });
+            
+            // 音频错误事件
+            audioElement.addEventListener('error', function(event) {
+                const error = event.target.error;
+                console.error('❌ 音频加载错误:', error);
+                
+                let errorMsg = '❌ 音频文件加载失败';
+                switch(error.code) {
+                    case error.MEDIA_ERR_ABORTED:
+                        errorMsg = '❌ 音频加载被中止';
+                        break;
+                    case error.MEDIA_ERR_NETWORK:
+                        errorMsg = '❌ 网络错误导致音频加载失败';
+                        break;
+                    case error.MEDIA_ERR_DECODE:
+                        errorMsg = '❌ 音频解码失败，文件可能已损坏';
+                        break;
+                    case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                        errorMsg = '❌ 不支持的音频格式或文件';
+                        break;
+                }
+                
+                showFeedback(errorMsg, 'error');
+                if (currentTrackIndexElement) {
+                    currentTrackIndexElement.value = errorMsg;
+                }
+            });
+            
+            // 设置音乐源并显式加载
+            audioElement.src = currentTrack;
+            console.log('🎯 设置音乐源:', audioElement.src);
+            audioElement.load();
+            
+        } catch (err) {
+            console.error('❌ 设置音乐源时出错:', err);
+            const errorMsg = '❌ 设置音乐源时出错: ' + err.message;
+            showFeedback(errorMsg, 'error');
+            if (currentTrackIndexElement) {
+                currentTrackIndexElement.value = errorMsg;
+            }
+        }
+    }
+}
+
+// 处理音频播放错误的辅助函数
+function handlePlaybackError(error, trackName) {
+    console.error('❌ 音乐播放失败详细信息:', error);
+    
+    // 提供更具体的错误信息和解决建议
+    let errorMsg = '❌ 背景音乐播放失败: ' + error.message;
+    
+    // 特殊处理常见错误类型
+    if (error.name === 'NotAllowedError') {
+        errorMsg = '⚠️ 播放失败: 浏览器需要用户交互才能播放音频\n请确保已点击"播放音乐"按钮并允许音频播放';
+        console.log('⚠️ NotAllowedError: 浏览器自动播放限制，请用户直接点击播放按钮');
+    } else if (error.name === 'NotSupportedError') {
+        errorMsg = '❌ 不支持此音频格式: ' + trackName;
+    } else if (error.name === 'AbortError') {
+        errorMsg = '❌ 音频加载被中止';
+    } else if (error.name === 'NetworkError') {
+        errorMsg = '❌ 网络错误，请检查您的网络连接';
+    }
+    
+    // 显示错误信息
+    showFeedback(errorMsg, 'error');
+    if (currentTrackIndexElement) {
+        currentTrackIndexElement.value = errorMsg;
+    }
+    
+    // 确保按钮状态正确
+    if (playMusicBtn) {
+        playMusicBtn.disabled = false;
+        playMusicBtn.style.backgroundColor = '#28a745';
+        playMusicBtn.style.cursor = 'pointer';
+    }
+    if (pauseMusicBtn) {
+        pauseMusicBtn.disabled = true;
+        pauseMusicBtn.style.backgroundColor = '#6c757d';
+        pauseMusicBtn.style.cursor = 'not-allowed';
+    }
+}
+
+// 注意：onCanPlay和onAudioError函数已在startMusic函数内部重新实现
+// 为了避免函数重复定义，这里不再保留独立的函数
+
+// 暂停音乐
+function pauseMusic() {
+    if (isMusicPlaying) {
+        audioElement.pause();
+        isMusicPlaying = false;
+        playMusicBtn.disabled = false;
+        pauseMusicBtn.disabled = true;
+        showFeedback('背景音乐已暂停', 'info');
+    }
+}
+
+// 播放下一首
+function playNextTrack() {
+    // 移动到下一首，如果到达列表末尾，则重新洗牌并从头开始
+    currentTrackIndex++;
+    if (currentTrackIndex >= shuffledMusic.length) {
+        shuffleMusic();
+    } else {
+        updateCurrentTrackIndex();
+    }
+    
+    // 加载并播放下一首
+    audioElement.src = shuffledMusic[currentTrackIndex];
+    audioElement.play();
+}
+
+// 调整音量
+function adjustVolume() {
+    const volume = parseFloat(musicVolumeControl.value);
+    audioElement.volume = volume;
+    showFeedback(`背景音乐音量已调整到 ${Math.round(volume * 100)}%`, 'info');
+}

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音乐播放测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            min-height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>音乐播放测试</h1>
+        <p>这是一个简单的测试页面，用于测试背景音乐播放功能。</p>
+        
+        <button id="test-play-btn">测试播放音乐</button>
+        <button id="test-pause-btn" disabled>暂停音乐</button>
+        <button id="test-next-btn">下一首</button>
+        
+        <div id="status">准备就绪</div>
+        
+        <audio id="test-audio" preload="metadata"></audio>
+    </div>
+
+    <script>
+        // 音乐文件列表
+        const musicFiles = [
+            "Alistair Griffin - Chemistry.mp3",
+            "Atlxs - PASSO BEM SOLTO (Slowed).mp3",
+            "Crayon Pop - Bar Bar Bar.mp3",
+            "Ed Sheeran - Shape of You.mp3",
+            "Eternxlkz - Montagem Nada Tropica.mp3",
+            "Jonasu - Black Magic.mp3",
+            "King CAAN,Elysa - Go Again (feat. ELYSA).mp3",
+            "Linkin Park - In the End.mp3",
+            "Lulleaux,Kid Princess - Empty Love.mp3",
+            "andrew spacey,Tommy Ice - Rear View.mp3"
+        ];
+
+        let currentTrackIndex = 0;
+        let isPlaying = false;
+        const audioElement = document.getElementById('test-audio');
+        const playBtn = document.getElementById('test-play-btn');
+        const pauseBtn = document.getElementById('test-pause-btn');
+        const nextBtn = document.getElementById('test-next-btn');
+        const statusElement = document.getElementById('status');
+
+        // 更新状态显示
+        function updateStatus(message) {
+            console.log(message);
+            statusElement.textContent = message;
+        }
+
+        // 播放音乐
+        function playMusic() {
+            if (!isPlaying) {
+                const currentTrack = musicFiles[currentTrackIndex];
+                updateStatus(`正在尝试播放: ${currentTrack}`);
+                
+                try {
+                    audioElement.src = currentTrack;
+                    updateStatus(`设置音乐源: ${currentTrack}`);
+                    
+                    audioElement.play().then(() => {
+                        isPlaying = true;
+                        playBtn.disabled = true;
+                        pauseBtn.disabled = false;
+                        updateStatus(`音乐播放成功: ${currentTrack}`);
+                    }).catch(error => {
+                        console.error('播放失败:', error);
+                        updateStatus(`播放失败: ${error.name} - ${error.message}`);
+                        if (error.name === 'NotAllowedError') {
+                            updateStatus(`播放失败: 浏览器需要用户交互后才能播放音频，请确保已点击播放按钮。`);
+                        }
+                    });
+                } catch (err) {
+                    console.error('发生错误:', err);
+                    updateStatus(`发生错误: ${err.message}`);
+                }
+            }
+        }
+
+        // 暂停音乐
+        function pauseMusic() {
+            if (isPlaying) {
+                audioElement.pause();
+                isPlaying = false;
+                playBtn.disabled = false;
+                pauseBtn.disabled = true;
+                updateStatus('音乐已暂停');
+            }
+        }
+
+        // 播放下一首
+        function playNext() {
+            currentTrackIndex = (currentTrackIndex + 1) % musicFiles.length;
+            updateStatus(`切换到下一首: ${musicFiles[currentTrackIndex]}`);
+            
+            // 如果当前正在播放，则播放下一首
+            if (isPlaying) {
+                playMusic();
+            }
+        }
+
+        // 设置按钮事件
+        playBtn.addEventListener('click', playMusic);
+        pauseBtn.addEventListener('click', pauseMusic);
+        nextBtn.addEventListener('click', playNext);
+
+        // 设置音频事件监听器
+        audioElement.addEventListener('ended', () => {
+            updateStatus('当前歌曲播放完毕');
+            playNext();
+        });
+
+        audioElement.addEventListener('error', (event) => {
+            const error = event.target.error;
+            console.error('音频错误:', error);
+            let errorMsg = '音频加载失败';
+            
+            switch(error.code) {
+                case error.MEDIA_ERR_ABORTED:
+                    errorMsg = '音频加载被中止';
+                    break;
+                case error.MEDIA_ERR_NETWORK:
+                    errorMsg = '网络错误导致音频加载失败';
+                    break;
+                case error.MEDIA_ERR_DECODE:
+                    errorMsg = '音频解码失败，文件可能已损坏';
+                    break;
+                case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                    errorMsg = '不支持的音频格式或文件';
+                    break;
+            }
+            
+            updateStatus(errorMsg);
+        });
+
+        updateStatus('点击"测试播放音乐"按钮开始测试');
+    </script>
+</body>
+</html>

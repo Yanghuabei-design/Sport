@@ -181,6 +181,103 @@ main {
     cursor: not-allowed;
 }
 
+/* 音乐控制区域样式 */
+.music-controls {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.volume-control label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+#music-volume {
+    width: 120px;
+    height: 6px;
+    border-radius: 3px;
+    background: #e0e0e0;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+#music-volume::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#music-volume::-webkit-slider-thumb:hover {
+    background: #764ba2;
+    transform: scale(1.1);
+}
+
+#music-volume::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+#music-volume::-moz-range-thumb:hover {
+    background: #764ba2;
+    transform: scale(1.1);
+}
+
+#play-music-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+#play-music-btn:hover:not(:disabled) {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+#pause-music-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+#pause-music-btn:hover:not(:disabled) {
+    background-color: #5a6268;
+    transform: translateY(-2px);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .music-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .volume-control {
+        justify-content: center;
+    }
+    
+    #music-volume {
+        width: 200px;
+    }
+}
+
 /* 页脚样式 */
 footer {
     text-align: center;

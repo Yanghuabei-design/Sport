@@ -53,6 +53,16 @@
                     <button id="stop-btn" class="btn" disabled>停止训练</button>
                     <button id="mute-btn" class="btn">静音</button>
                 </div>
+                
+                <!-- 音乐控制区域 -->
+                <div class="music-controls">
+                    <button id="play-music-btn" class="btn">播放音乐</button>
+                    <button id="pause-music-btn" class="btn" disabled>暂停音乐</button>
+                    <div class="volume-control">
+                        <label for="music-volume">音量:</label>
+                        <input type="range" id="music-volume" min="0" max="1" step="0.1" value="0.5">
+                    </div>
+                </div>
             </section>
         </main>
         
@@ -60,6 +70,10 @@
             <p>&copy; 2024 AI健身助手团队 - 科学健身，预防损伤</p>
         </footer>
     </div>
+    
+    <!-- 音乐播放相关元素 -->
+    <audio id="background-music" preload="metadata"></audio>
+    <input type="hidden" id="current-track-index" value="-1">
     
     <script src="script.js"></script>
     
