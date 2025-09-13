@@ -381,7 +381,8 @@ function analyzeDeadlift(landmarks) {
             
             const spineTilt = Math.abs(nose.x - midHip.x);
             
-            if (spineTilt > 0.05) {
+            // 进一步增加阈值，降低触发频率，允许更大范围的身体前倾不会触发提示
+            if (spineTilt > 0.15) {
                 showFeedback('保持背部中立，不要过度前倾或后仰', 'warning');
             }
             
