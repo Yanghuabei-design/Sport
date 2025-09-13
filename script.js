@@ -292,7 +292,8 @@ function analyzeSquatSide(landmarks) {
             const leftShoulder = landmarks[11];
             const spineAngle = calculateAngle(leftShoulder, leftHip, leftKnee);
             
-            if (spineAngle < 110) {
+            // 将阈值设置为80度，只有在极端弯曲脊柱时才触发提示
+            if (spineAngle < 80) {
                 showFeedback('保持背部挺直', 'warning');
             }
         }
