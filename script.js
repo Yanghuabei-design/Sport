@@ -1071,30 +1071,12 @@ function startMusic() {
         }
         
         try {
-            // 重置音频元素，确保干净的状态
-            console.log('🔄 重置音频元素状态...');
-            
-            // 清除所有事件监听器
-            const newAudioElement = document.createElement('audio');
-            newAudioElement.id = 'background-music';
-            newAudioElement.preload = 'metadata';
-            newAudioElement.volume = musicVolumeControl ? parseFloat(musicVolumeControl.value) : 0.5;
-            
-            // 替换旧的音频元素
-            const parent = audioElement.parentNode;
-            if (parent) {
-                parent.replaceChild(newAudioElement, audioElement);
-                audioElement = newAudioElement;
-            }
-            
-            // 设置新的事件监听器
-            audioElement.addEventListener('ended', playNextTrack);
-            
-            // 音频加载完成事件 - 在加载完成后再尝试播放，增加成功概率
-            audioElement.addEventListener('loadeddata', function() {
-                console.log('✅ 音频数据加载完成');
+            // 检查是否是暂停状态需要恢复播放
+            if (audioElement.src && audioElement.currentTime > 0 && !audioElement.ended) {
+                console.log('▶️ 从暂停位置恢复播放音乐...');
+                console.log('⏱️ 当前播放位置:', audioElement.currentTime, '秒');
                 
-                // 在loadeddata事件中尝试播放，这更符合浏览器的自动播放政策
+                // 直接从暂停位置恢复播放
                 audioElement.play().then(() => {
                     isMusicPlaying = true;
                     
@@ -1111,7 +1093,7 @@ function startMusic() {
                     }
                     
                     // 显示成功信息
-                    const successMsg = '🎵 背景音乐已开始播放: ' + currentTrack;
+                    const successMsg = '🎵 背景音乐已恢复播放';
                     showFeedback(successMsg, 'info', false); // 不启用语音提示
                     console.log(successMsg);
                     
@@ -1121,39 +1103,91 @@ function startMusic() {
                 }).catch(error => {
                     handlePlaybackError(error, currentTrack);
                 });
-            });
-            
-            // 音频错误事件
-            audioElement.addEventListener('error', function(event) {
-                const error = event.target.error;
-                console.error('❌ 音频加载错误:', error);
+            } else {
+                // 首次播放或切换曲目，需要创建新的音频元素
+                console.log('🔄 创建新的音频元素并加载音乐...');
                 
-                let errorMsg = '❌ 音频文件加载失败';
-                switch(error.code) {
-                    case error.MEDIA_ERR_ABORTED:
-                        errorMsg = '❌ 音频加载被中止';
-                        break;
-                    case error.MEDIA_ERR_NETWORK:
-                        errorMsg = '❌ 网络错误导致音频加载失败';
-                        break;
-                    case error.MEDIA_ERR_DECODE:
-                        errorMsg = '❌ 音频解码失败，文件可能已损坏';
-                        break;
-                    case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                        errorMsg = '❌ 不支持的音频格式或文件';
-                        break;
+                // 清除所有事件监听器
+                const newAudioElement = document.createElement('audio');
+                newAudioElement.id = 'background-music';
+                newAudioElement.preload = 'metadata';
+                newAudioElement.volume = musicVolumeControl ? parseFloat(musicVolumeControl.value) : 0.5;
+                
+                // 替换旧的音频元素
+                const parent = audioElement.parentNode;
+                if (parent) {
+                    parent.replaceChild(newAudioElement, audioElement);
+                    audioElement = newAudioElement;
                 }
                 
-                showFeedback(errorMsg, 'error', false); // 不启用语音提示
-                if (currentTrackIndexElement) {
-                    currentTrackIndexElement.value = errorMsg;
-                }
-            });
-            
-            // 设置音乐源并显式加载
-            audioElement.src = currentTrack;
-            console.log('🎯 设置音乐源:', audioElement.src);
-            audioElement.load();
+                // 设置新的事件监听器
+                audioElement.addEventListener('ended', playNextTrack);
+                
+                // 音频加载完成事件 - 在加载完成后再尝试播放，增加成功概率
+                audioElement.addEventListener('loadeddata', function() {
+                    console.log('✅ 音频数据加载完成');
+                    
+                    // 在loadeddata事件中尝试播放，这更符合浏览器的自动播放政策
+                    audioElement.play().then(() => {
+                        isMusicPlaying = true;
+                        
+                        // 更新按钮状态和样式
+                        if (playMusicBtn) {
+                            playMusicBtn.disabled = true;
+                            playMusicBtn.style.backgroundColor = '#6c757d';
+                            playMusicBtn.style.cursor = 'not-allowed';
+                        }
+                        if (pauseMusicBtn) {
+                            pauseMusicBtn.disabled = false;
+                            pauseMusicBtn.style.backgroundColor = '#dc3545';
+                            pauseMusicBtn.style.cursor = 'pointer';
+                        }
+                        
+                        // 显示成功信息
+                        const successMsg = '🎵 背景音乐已开始播放: ' + currentTrack;
+                        showFeedback(successMsg, 'info', false); // 不启用语音提示
+                        console.log(successMsg);
+                        
+                        if (currentTrackIndexElement) {
+                            currentTrackIndexElement.value = successMsg;
+                        }
+                    }).catch(error => {
+                        handlePlaybackError(error, currentTrack);
+                    });
+                });
+                
+                // 音频错误事件
+                audioElement.addEventListener('error', function(event) {
+                    const error = event.target.error;
+                    console.error('❌ 音频加载错误:', error);
+                    
+                    let errorMsg = '❌ 音频文件加载失败';
+                    switch(error.code) {
+                        case error.MEDIA_ERR_ABORTED:
+                            errorMsg = '❌ 音频加载被中止';
+                            break;
+                        case error.MEDIA_ERR_NETWORK:
+                            errorMsg = '❌ 网络错误导致音频加载失败';
+                            break;
+                        case error.MEDIA_ERR_DECODE:
+                            errorMsg = '❌ 音频解码失败，文件可能已损坏';
+                            break;
+                        case error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                            errorMsg = '❌ 不支持的音频格式或文件';
+                            break;
+                    }
+                    
+                    showFeedback(errorMsg, 'error', false); // 不启用语音提示
+                    if (currentTrackIndexElement) {
+                        currentTrackIndexElement.value = errorMsg;
+                    }
+                });
+                
+                // 设置音乐源并显式加载
+                audioElement.src = currentTrack;
+                console.log('🎯 设置音乐源:', audioElement.src);
+                audioElement.load();
+            }
             
         } catch (err) {
             console.error('❌ 设置音乐源时出错:', err);
@@ -1215,6 +1249,7 @@ function pauseMusic() {
         playMusicBtn.disabled = false;
         pauseMusicBtn.disabled = true;
         showFeedback('背景音乐已暂停', 'info', false); // 不启用语音提示
+        console.log('⏸️ 音乐已暂停，当前播放位置:', audioElement.currentTime, '秒');
     }
 }
 
