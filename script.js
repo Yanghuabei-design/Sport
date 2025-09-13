@@ -13,8 +13,12 @@ const feedbackTextElement = document.getElementById('feedback-text');
 const startBtn = document.getElementById('start-btn');
 const stopBtn = document.getElementById('stop-btn');
 const muteBtn = document.getElementById('mute-btn');
+const plankTimerElement = document.getElementById('plank-timer');
 let countModal;
 let closeModalBtn;
+let plankTimerModal;
+let closeTimerModalBtn;
+let timerModalTitleElement;
 
 // 应用状态变量
 let isRunning = false;
@@ -24,6 +28,12 @@ let pose = null;
 let exerciseState = 'ready'; // ready, down, up
 let lastFeedbackTime = 0;
 const FEEDBACK_INTERVAL = 1500; // 语音反馈间隔（毫秒）
+
+// 平板支撑计时相关变量
+let plankStartTime = 0;
+let plankTimerInterval = null;
+let plankElapsedTime = 0;
+let lastThirtySecondMark = 0;
 
 // 定义POINTS常量
 const POSE_CONNECTIONS = [
@@ -676,6 +686,11 @@ async function startTraining() {
         setTimeout(() => {
             canCorrectMotion = true;
             processVideo();
+            
+            // 如果是平板支撑，启动计时器
+            if (exerciseTypeSelect.value === 'plank') {
+                startPlankTimer();
+            }
         }, 3000);
     } catch (error) {
         console.error('开始训练失败:', error);
@@ -683,6 +698,8 @@ async function startTraining() {
         // 重置按钮状态
         startBtn.disabled = false;
         stopBtn.disabled = true;
+        // 停止计时器（如果有）
+        stopPlankTimer();
     }
 }
 
@@ -706,6 +723,9 @@ function stopTraining() {
     // 清除canvas
     overlayCtx.clearRect(0, 0, overlayElement.width, overlayElement.height);
     
+    // 停止平板支撑计时器
+    stopPlankTimer();
+    
     showFeedback('训练已停止', 'info');
 }
 
@@ -716,6 +736,122 @@ function toggleMute() {
     showFeedback(isMuted ? '语音反馈已关闭' : '语音反馈已开启', 'info');
 }
 
+// 格式化时间为 MM:SS 格式
+function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+    const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+}
+
+// 更新平板支撑计时器显示
+function updatePlankTimer() {
+    if (!isRunning || exerciseTypeSelect.value !== 'plank') return;
+    
+    const currentTime = Date.now();
+    plankElapsedTime = currentTime - plankStartTime;
+    
+    // 更新显示
+    plankTimerElement.textContent = `时长: ${formatTime(plankElapsedTime)}`;
+    
+    // 检查是否到达30秒提醒点
+    checkThirtySecondMark();
+}
+
+// 检查是否到达30秒提醒点
+function checkThirtySecondMark() {
+    const totalSeconds = Math.floor(plankElapsedTime / 1000);
+    
+    // 检查是否是30的倍数且大于上次提醒的标记
+    if (totalSeconds > 0 && totalSeconds % 30 === 0 && totalSeconds > lastThirtySecondMark) {
+        lastThirtySecondMark = totalSeconds;
+        
+        // 显示弹窗
+        plankTimerModal.style.display = 'flex';
+        plankTimerModal.style.justifyContent = 'center';
+        plankTimerModal.style.alignItems = 'center';
+        
+        // 语音提醒 - 播报当前已做时长
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        let message = '';
+        let modalTitle = '';
+        
+        if (minutes > 0) {
+            message = `已坚持${minutes}分${seconds}秒，做得很好！`;
+            modalTitle = `已坚持${minutes}分${seconds}秒！`;
+        } else {
+            message = `已坚持${seconds}秒，做得很好！`;
+            modalTitle = `已坚持${seconds}秒！`;
+        }
+        
+        // 更新弹窗标题
+        if (timerModalTitleElement) {
+            timerModalTitleElement.textContent = modalTitle;
+        }
+        
+        // 优先播放30秒提醒语音，确保能播报完
+        // 停止任何正在进行的语音
+        window.speechSynthesis.cancel();
+        speak(message);
+        
+        // 也显示文字反馈
+        showFeedback(message, 'success');
+        
+        // 3秒后自动关闭弹窗
+        setTimeout(() => {
+            if (plankTimerModal) {
+                plankTimerModal.style.display = 'none';
+            }
+        }, 3000);
+    }
+}
+
+// 启动平板支撑计时器
+function startPlankTimer() {
+    if (exerciseTypeSelect.value !== 'plank') return;
+    
+    plankStartTime = Date.now() - plankElapsedTime; // 减去已经过去的时间，允许暂停后继续
+    plankTimerElement.style.display = 'inline';
+    
+    // 清除可能存在的计时器
+    if (plankTimerInterval) {
+        clearInterval(plankTimerInterval);
+    }
+    
+    // 设置新的计时器，每秒更新一次
+    plankTimerInterval = setInterval(updatePlankTimer, 1000);
+    
+    // 立即更新一次
+    updatePlankTimer();
+}
+
+// 停止平板支撑计时器
+function stopPlankTimer() {
+    if (plankTimerInterval) {
+        clearInterval(plankTimerInterval);
+        plankTimerInterval = null;
+    }
+    
+    // 如果不是平板支撑动作，隐藏计时器
+    if (exerciseTypeSelect.value !== 'plank') {
+        plankTimerElement.style.display = 'none';
+    }
+}
+
+// 重置平板支撑计时器
+function resetPlankTimer() {
+    stopPlankTimer();
+    plankElapsedTime = 0;
+    lastThirtySecondMark = 0;
+    plankTimerElement.textContent = '时长: 00:00';
+    
+    // 如果不是平板支撑动作，隐藏计时器
+    if (exerciseTypeSelect.value !== 'plank') {
+        plankTimerElement.style.display = 'none';
+    }
+}
+
 // 切换动作类型时重置状态
 function onExerciseTypeChange() {
     if (isRunning) {
@@ -723,6 +859,17 @@ function onExerciseTypeChange() {
         repCountElement.textContent = `次数: ${repCount}`;
         exerciseState = 'ready';
         showFeedback(`已切换到${exerciseTypeSelect.options[exerciseTypeSelect.selectedIndex].text}训练`, 'info');
+        
+        // 如果切换到平板支撑，启动计时器；如果从平板支撑切换到其他动作，重置并隐藏计时器
+        if (exerciseTypeSelect.value === 'plank') {
+            resetPlankTimer();
+            startPlankTimer();
+        } else {
+            resetPlankTimer();
+        }
+    } else {
+        // 非运行状态下切换动作，也重置计时器
+        resetPlankTimer();
     }
 }
 
@@ -735,6 +882,9 @@ exerciseTypeSelect.addEventListener('change', onExerciseTypeChange);
 // 初始化应用
 function initApp() {
     showFeedback('Hi, I\'m StartFitter. 选择你的动作并开始训练吧。', 'info');
+    // 隐藏所有弹窗
+    countModal.style.display = 'none';
+    plankTimerModal.style.display = 'none';
 }
 
 // 页面加载完成后初始化应用
@@ -742,11 +892,19 @@ window.addEventListener('DOMContentLoaded', () => {
     // 确保DOM元素都已加载
     countModal = document.getElementById('count-modal');
     closeModalBtn = document.getElementById('close-modal-btn');
+    plankTimerModal = document.getElementById('plank-timer-modal');
+    closeTimerModalBtn = document.getElementById('close-timer-modal-btn');
+    timerModalTitleElement = document.getElementById('timer-modal-title');
     
     initApp();
     
     // 设置弹窗关闭事件
     closeModalBtn.addEventListener('click', () => {
         countModal.style.display = 'none';
+    });
+    
+    // 设置平板支撑计时弹窗关闭事件
+    closeTimerModalBtn.addEventListener('click', () => {
+        plankTimerModal.style.display = 'none';
     });
 });

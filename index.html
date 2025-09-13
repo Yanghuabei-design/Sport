@@ -41,6 +41,7 @@
                 <div class="status-display">
                     <div class="counter">
                         <span id="rep-count">次数: 0</span>
+                        <span id="plank-timer" style="display: none; margin-left: 20px;">时长: 00:00</span>
                     </div>
                     <div class="feedback">
                         <span id="feedback-text">准备开始...</span>
@@ -68,6 +69,15 @@
             <h2>已到达20个</h2>
             <p>建议休息一下再继续训练</p>
             <button id="close-modal-btn" class="btn">继续训练</button>
+        </div>
+    </div>
+    
+    <!-- 平板支撑计时提醒弹窗 -->
+    <div id="plank-timer-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="timer-modal-title">已坚持30秒！</h2>
+            <p>做得很好，继续保持！</p>
+            <button id="close-timer-modal-btn" class="btn">继续训练</button>
         </div>
     </div>
 </body>
