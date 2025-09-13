@@ -13,6 +13,8 @@ const feedbackTextElement = document.getElementById('feedback-text');
 const startBtn = document.getElementById('start-btn');
 const stopBtn = document.getElementById('stop-btn');
 const muteBtn = document.getElementById('mute-btn');
+let countModal;
+let closeModalBtn;
 
 // 应用状态变量
 let isRunning = false;
@@ -184,7 +186,19 @@ function analyzeSquat(landmarks) {
             exerciseState = 'up';
             repCount++;
             repCountElement.textContent = `次数: ${repCount}`;
-            showFeedback('完美！完成一次深蹲', 'success');
+            
+            // 检查是否达到20次
+            if (repCount === 20) {
+                const message = '已到达20个，建议休息';
+                // 显示弹窗并设置正确的样式
+                countModal.style.display = 'flex';
+                countModal.style.justifyContent = 'center';
+                countModal.style.alignItems = 'center';
+                // 确保语音播报
+                speak(message);
+            } else {
+                showFeedback('完美！完成一次深蹲', 'success');
+            }
         }
         
         // 纠正动作
@@ -238,7 +252,19 @@ function analyzeSquatFront(landmarks) {
             exerciseState = 'up';
             repCount++;
             repCountElement.textContent = `次数: ${repCount}`;
-            showFeedback('完美！完成一次深蹲', 'success');
+            
+            // 检查是否达到20次
+            if (repCount === 20) {
+                const message = '已到达20个，建议休息';
+                // 显示弹窗并设置正确的样式
+                countModal.style.display = 'flex';
+                countModal.style.justifyContent = 'center';
+                countModal.style.alignItems = 'center';
+                // 确保语音播报
+                speak(message);
+            } else {
+                showFeedback('完美！完成一次深蹲', 'success');
+            }
         }
         
         // 纠正动作 - 只检查膝盖是否内扣
@@ -283,7 +309,19 @@ function analyzeSquatSide(landmarks) {
             exerciseState = 'up';
             repCount++;
             repCountElement.textContent = `次数: ${repCount}`;
-            showFeedback('完美！完成一次深蹲', 'success');
+            
+            // 检查是否达到20次
+            if (repCount === 20) {
+                const message = '已到达20个，建议休息';
+                // 显示弹窗并设置正确的样式
+                countModal.style.display = 'flex';
+                countModal.style.justifyContent = 'center';
+                countModal.style.alignItems = 'center';
+                // 确保语音播报
+                speak(message);
+            } else {
+                showFeedback('完美！完成一次深蹲', 'success');
+            }
         }
         
         // 纠正动作 - 只检查背部是否保持挺直
@@ -699,4 +737,15 @@ function initApp() {
 }
 
 // 页面加载完成后初始化应用
-window.addEventListener('load', initApp);
+window.addEventListener('DOMContentLoaded', () => {
+    // 确保DOM元素都已加载
+    countModal = document.getElementById('count-modal');
+    closeModalBtn = document.getElementById('close-modal-btn');
+    
+    initApp();
+    
+    // 设置弹窗关闭事件
+    closeModalBtn.addEventListener('click', () => {
+        countModal.style.display = 'none';
+    });
+});
